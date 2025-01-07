@@ -1,0 +1,63 @@
+/*
+ * kjj.setting.css
+ * 面談の日時や時間の設定、保護者の入力を許可するかどうか設定するモジュール
+ */
+
+ .kjj-setting-back,
+ .kjj-setting-waku, .kjj-setting-waku-ok,
+ .kjj-now-usable1, .kjj-now-usable2, .kjj-now-usable3,
+ .kjj-setting-usable-change,
+ .kjj-title-1, .kjj-title-2, .kjj-title-3
+ {
+   position: absolute;
+ }
+
+.kjj-setting-back {
+  top : 10px;
+  left: 10px;
+}
+
+.kjj-title-1 {
+  top : 60px;
+  left: 10px;
+}
+
+.kjj-now-usable1, .kjj-now-usable2, .kjj-now-usable3 {
+  top : 85px;
+  left: 10px;
+}
+
+.kjj-now-usable1 {
+  color : blue;
+}
+
+.kjj-now-usable2 {
+  color : red;
+}
+
+.kjj-setting-usable-change {
+  top : 85px;
+  left: 210px;
+}
+
+.kjj-title-2 {
+  top : 140px;
+  left: 10px;
+}
+
+.kjj-title-3 {
+  top : 160px;
+  left: 10px;
+}
+
+.kjj-setting-waku {
+  top    : 185px;
+  left   : 10px;
+  width  : 180px;
+  height : 180px;
+}
+
+.kjj-setting-waku-ok {
+  top : 185px;
+  left: 210px;
+}

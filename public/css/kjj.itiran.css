@@ -1,0 +1,74 @@
+/*
+ * kjj.itiran.css
+ * 個人情報一覧画面
+ */
+
+ .kjj-itiran-previous-year, .kjj-itiran-nendo, .kjj-itiran-next-year,
+ .kjj-itiran-gakunenSelect, .kjj-itiran-tikuSelect,
+ .kjj-itiran-download, .kjj-itiran-upload,
+ .kjj-itiran-wait, .kjj-itiran-table
+ {
+   position: absolute;
+ }
+
+.kjj-itiran-previous-year {
+  top : 5px;
+  left: 10px;
+}
+
+.kjj-itiran-nendo {
+  top : 5px;
+  left: 30px;
+}
+
+.kjj-itiran-next-year {
+  top : 5px;
+  left: 105px;
+}
+
+.kjj-itiran-gakunenSelect {
+  top : 5px;
+  left: 200px;
+}
+
+.kjj-itiran-tikuSelect {
+  top : 5px;
+  left: 250px;
+}
+
+.kjj-itiran-download {
+  top : 5px;
+  left: 450px;
+}
+
+.kjj-itiran-upload {
+  top : 5px;
+  left: 550px;
+}
+
+.kjj-itiran-table {
+  top : 35px;
+  left: 10px;
+}
+
+/* 点滅 */
+@keyframes blinking {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+/* 要素にアニメーションを適用 */
+.kjj-itiran-wait {
+  top : 50px;
+  left: 160px;
+  animation: blinking 1s ease-in-out infinite alternate;
+}
+
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
