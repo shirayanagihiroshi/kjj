@@ -5,7 +5,7 @@
 
  .kjj-itiran-previous-year, .kjj-itiran-nendo, .kjj-itiran-next-year,
  .kjj-itiran-gakunenSelect, .kjj-itiran-tikuSelect,
- .kjj-itiran-download, .kjj-itiran-upload,
+ .kjj-itiran-download, #kjj-itiran-fileSelect, .kjj-itiran-upload,
  .kjj-itiran-wait, .kjj-itiran-table
  {
    position: absolute;
@@ -39,6 +39,11 @@
 .kjj-itiran-download {
   top : 5px;
   left: 450px;
+}
+
+#kjj-itiran-fileSelect {
+  top : 5px;
+  left: 650px;
 }
 
 .kjj-itiran-upload {

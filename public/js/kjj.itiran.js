@@ -14,12 +14,14 @@ kjj.itiran = (function () {
           + '<select class="kjj-itiran-gakunenSelect"></select>'
           + '<select class="kjj-itiran-tikuSelect"></select>'
           + '<button class="kjj-itiran-download">ダウンロード</button>'
+          + '<input type="file" id="kjj-itiran-fileSelect">'
           + '<button class="kjj-itiran-upload">アップロード</button>'
           + '<span class="kjj-itiran-wait">データ取得中</span>'
           + '<table class="kjj-itiran-table"></table>',
         gakunenList  : ['-', '中1', '中2', '中3', '高1', '高2', '高3'],
         tikuList     : ['地区A(1)', '地区B(2)', '地区C(3)'],
-        tableHeader  : '<tr><th>学年</th><th>クラス</th><th>番号</th><th>氏名</th><th>PTA地区番</th><th>住所</th>',
+        csvHeader  : '中高,1年組,1年番,2年組,2年番,3年組,3年番,氏名,PTA地区番,住所\n',
+        tableHeader  : '<tr><th>中高</th><th>学年</th><th>クラス</th><th>番号</th><th>氏名</th><th>PTA地区番</th><th>住所</th>',
         downloadFileName : 'kojinjyouhou_',
         settable_map : { targetNendo : true },
         targetNendo  : 0,
@@ -31,7 +33,7 @@ kjj.itiran = (function () {
       },
       jqueryMap = {},
       setJqueryMap, configModule, initModule, downloadFinish, removeItiran,
-      initLocal, onPreviousYear, onNextYear, onDownload, onUpload,
+      initLocal, onPreviousYear, onNextYear, onDownload, onUpload, uploadInner, 
       createTable, backToCalendar, onWakuSet, setView;
 
   //---DOMメソッド---
@@ -45,6 +47,7 @@ kjj.itiran = (function () {
       $gakunenSelect : $container.find( '.kjj-itiran-gakunenSelect' ),
       $tikuSelect    : $container.find( '.kjj-itiran-tikuSelect' ),
       $download      : $container.find( '.kjj-itiran-download' ),
+      $fileSelect    : $container.find( '#kjj-itiran-fileSelect' ),
       $upload        : $container.find( '.kjj-itiran-upload' ),
       $wait          : $container.find( '.kjj-itiran-wait' ),
       $table         : $container.find( '.kjj-itiran-table' )
@@ -79,7 +82,7 @@ kjj.itiran = (function () {
     if (stateMap.downloading == false) {
       const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
       const content = createTable('csv');
-      const blob = new Blob([ bom, content ], { "type" : "text/csv" });
+      const blob = new Blob([ bom, configMap.csvHeader + content ], { "type" : "text/csv" });
 
       // https://javascript.keicode.com/newjs/download-files.php#2-1
       // 上記参照
@@ -94,8 +97,29 @@ kjj.itiran = (function () {
     }
   }
 
+  // ほぼgeminiに教えてもらったコード
   onUpload = function ( ) {
+    const fileInput = document.getElementById('kjj-itiran-fileSelect');
+    const file = fileInput.files[0];
 
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        const result = event.target.result;
+        // 読み込んだファイルの内容を処理する
+        uploadInner(result);
+      };
+
+      reader.onerror = () => {
+        console.error('ファイルの読み込みに失敗しました');
+      };
+
+      // テキストファイルとして読み込む
+      reader.readAsText(file);
+    } else {
+      console.error('ファイルが選択されていません');
+    }
   }
 
   onWakuSet = function ( ) {
@@ -125,53 +149,94 @@ kjj.itiran = (function () {
     kjj.model.readySeito(configMap.targetNendo);
   }
 
+  uploadInner = function (str) {
+    let i,
+      records = str.split('\n');
+
+    for (i = 0; i < records.length; i++) {
+      console.log(records[i]);
+    }
+  }
+
   // kind 処理種別
   //      'csv'  : csv文字列を出力
   //      'html' : html文字列を出力
   createTable = function (kind) {
-    let i,
+    let i, nenji1, nenji2, nenji3,
       str = "",
       seito = kjj.model.getSeito(),
-      f = function (nendo) {
-            return function (target) {
-              if ( target.nendo == nendo ) {
-                return true;
-              } else {
-                return false;
-              }
-            }
-          };
+      nendoF = function (nendo) {
+        return function (target) {
+          if ( target.nendo == nendo ) {
+            return true;
+          } else {
+            return false;
+          }
+        }
+      },
+      gakunenF = function (gakunen) {
+        return function (target) {
+          if ( target.gakunen == gakunen ) {
+            return true;
+          } else {
+            return false;
+          }
+        }
+      };
 
     for (i = 0; i < seito.length; i++) {
-      let clsinfo = seito[i].clsinfo.find(f(configMap.targetNendo));
 
+      // 中高 中学:0, 高校:1
       if (kind == 'csv') {
-      } else if (kind == 'html') {
-        str += '<tr><td>';
+        if (seito[i].tyuukou == 0) {
+          str += '中,';
+        } else {
+          str += '高,';
+        }
+      } else if (kind == 'html'){
+        if (seito[i].tyuukou == 0) {
+          str += '<tr><td>中</td><td>';
+        } else {
+          str += '<tr><td>高</td><td>';
+        }
       }
 
-      str += String(clsinfo.gakunen);
-
+      // 学年、クラスの情報
       if (kind == 'csv') {
-        str += ',';
+        // 一人の生徒のクラス情報を年度の降順にソート
+        // (留年している生徒がいたら、新しい年度のデータを使うため)
+        seito[i].clsinfo.sort((a, b) => b.nendo - a.nendo);
+
+        // 1年時のデータ
+        nenji1 = seito[i].clsinfo.find(gakunenF(1));
+
+        if (nenji1 != null) {
+          str += String(nenji1.cls) + ',' + String(nenji1.bangou) + ',';
+        } else {
+          str += ',,';
+        }
+
+        // 2年時のデータ
+        nenji2 = seito[i].clsinfo.find(gakunenF(2));
+
+        if (nenji2 != null) {
+          str += String(nenji2.cls) + ',' + String(nenji2.bangou) + ',';
+        } else {
+          str += ',,';
+        }
+
+        // 3年時のデータ
+        nenji3 = seito[i].clsinfo.find(gakunenF(3));
+
+        if (nenji3 != null) {
+          str += String(nenji3.cls) + ',' + String(nenji3.bangou) + ',';
+        } else {
+          str += ',,';
+        }
+
       } else if (kind == 'html') {
-        str += '</td><td>';
-      }
-
-      str += String(clsinfo.cls);
-
-      if (kind == 'csv') {
-        str += ',';
-      } else if (kind == 'html') {
-        str += '</td><td>';
-      }
-
-      str += String(clsinfo.bangou);
-
-      if (kind == 'csv') {
-        str += ',';
-      } else if (kind == 'html') {
-        str += '</td><td>';
+        let kotoshi = seito[i].clsinfo.find(nendoF(configMap.targetNendo));
+        str += String(kotoshi.gakunen) + '</td><td>' + String(kotoshi.cls) + '</td><td>' + String(kotoshi.bangou) + '</td><td>';
       }
 
       str += seito[i].name;
@@ -294,6 +359,7 @@ kjj.itiran = (function () {
         jqueryMap.$gakunenSelect.remove();
         jqueryMap.$tikuSelect.remove();
         jqueryMap.$download.remove();
+        jqueryMap.$fileSelect.remove();
         jqueryMap.$upload.remove();
         jqueryMap.$wait.remove();
         jqueryMap.$table.remove();
