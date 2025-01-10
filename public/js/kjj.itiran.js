@@ -18,7 +18,7 @@ kjj.itiran = (function () {
           + '<button class="kjj-itiran-upload">アップロード</button>'
           + '<span class="kjj-itiran-wait">データ取得中</span>'
           + '<table class="kjj-itiran-table"></table>',
-        gakunenList  : ['-', '中1', '中2', '中3', '高1', '高2', '高3'],
+        gakunenList  : ['-', '中学', '高1', '高2', '高3'],
         tikuList     : ['地区A(1)', '地区B(2)', '地区C(3)'],
         csvHeader  : '中高,1年組,1年番,2年組,2年番,3年組,3年番,氏名,PTA地区番,住所\n',
         tableHeader  : '<tr><th>中高</th><th>学年</th><th>クラス</th><th>番号</th><th>氏名</th><th>PTA地区番</th><th>住所</th>',
@@ -34,7 +34,7 @@ kjj.itiran = (function () {
       jqueryMap = {},
       setJqueryMap, configModule, initModule, downloadFinish, removeItiran,
       initLocal, onPreviousYear, onNextYear, onDownload, onUpload, uploadInner, 
-      createTable, backToCalendar, onWakuSet, setView;
+      createTable, backToCalendar, setView;
 
   //---DOMメソッド---
   setJqueryMap = function () {
@@ -121,13 +121,13 @@ kjj.itiran = (function () {
       console.error('ファイルが選択されていません');
     }
   }
-
+/*
   onWakuSet = function ( ) {
     stateMap.waku = JSON.parse(jqueryMap.$waku.val());
 
     $.gevent.publish('verifyWaku', [{errStr:'日時の枠を設定しますか？なお、不整合を防ぐため、このクラスの予約情報は一旦全て削除されます'}]);
   }
-
+*/
   //---ユーティリティメソッド---
   // 初期化時と表示年度を変えるときに呼ばれる
   initLocal = function (sabun) {
@@ -150,10 +150,35 @@ kjj.itiran = (function () {
   }
 
   uploadInner = function (str) {
-    let i,
+    let i, j, obj, record, tyuukou,
       records = str.split('\n');
 
     for (i = 0; i < records.length; i++) {
+      record = records[i].split(',');
+
+      if (record[0] == '中') {
+        tyuukou = 0;
+      } else {
+        tyuukou = 1;
+      }
+
+      obj = { tyuukou : tyuukou,
+              shimei  : record[7],
+              tikuban : record[8],
+              address : record[9] };
+
+      // 1年次のクラス、2年次クラス、3年次クラスを追加
+      for (j = 0; j < record.length; j++) {
+        if (record[0] == '中' || record[0] == '中学') {
+          tyuukou = 0;
+        } else {
+          tyuukou = 1;
+        }
+	record[0]
+	tyuukou
+	obj = {}
+        record[j];
+      }
       console.log(records[i]);
     }
   }
@@ -239,7 +264,7 @@ kjj.itiran = (function () {
         str += String(kotoshi.gakunen) + '</td><td>' + String(kotoshi.cls) + '</td><td>' + String(kotoshi.bangou) + '</td><td>';
       }
 
-      str += seito[i].name;
+      str += seito[i].shimei;
 
       if (kind == 'csv') {
         str += ',';
