@@ -15,7 +15,7 @@ kjj.dialogOkCancel = (function () {
             + '<button class="kjj-dialogOkCancel-main-button-ok">'
               + '<p>ok</p>'
             + '</button>'
-            + '<button class="kjj-main-button-cancel">'
+            + '<button class="kjj-dialogOkCancel-main-button-cancel">'
               + '<p>cancel</p>'
             + '</button>'
           + '</div>'
@@ -57,7 +57,7 @@ kjj.dialogOkCancel = (function () {
   }
 
   onOK = function () {
-    //いろいろな受け持つので、configModuleで指定しておく
+    //いろいろな機能を受け持つので、configModuleで指定しておく
     configMap.okFunc();
     return false;
   }

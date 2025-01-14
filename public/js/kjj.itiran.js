@@ -29,12 +29,12 @@ kjj.itiran = (function () {
       stateMap = {
         $container : null,
         downloading : true,
-        waku : []
+        changeNendo : 0
       },
       jqueryMap = {},
-      setJqueryMap, configModule, initModule, downloadFinish, removeItiran,
-      initLocal, onPreviousYear, onNextYear, onDownload, onUpload, uploadInner, 
-      createTable, backToCalendar, setView;
+      setJqueryMap, configModule, initModule, downloadFinish, changeNendo,
+      removeItiran, initLocal, onPreviousYear, onNextYear, onDownload,
+      onUpload, uploadInner, createTable, backToCalendar, setView;
 
   //---DOMメソッド---
   setJqueryMap = function () {
@@ -65,17 +65,15 @@ kjj.itiran = (function () {
     stateMap.downloading = false;
   }
 
-  // 表示年度を変えるときはアンカーを残さずに処理する。
-  // つまり、このモジュール内の初期化処理を部分的にやり直す
+  // 表示年度を変えるときは初回表示時と同じようにする
   onPreviousYear = function ( ) {
-    if (stateMap.downloading == false) {
-      initLocal(-1);
-    }
+    stateMap.changeNendo = configMap.targetNendo - 1;
+    $.gevent.publish('verifyChange', [{errStr:String(stateMap.changeNendo) + '年度の情報に切り替えますか？'}]);
   }
+
   onNextYear = function ( ) {
-    if (stateMap.downloading == false) {
-      initLocal(1);
-    }
+    stateMap.changeNendo = configMap.targetNendo + 1;
+    $.gevent.publish('verifyChange', [{errStr:String(stateMap.changeNendo) + '年度の情報に切り替えますか？'}]);
   }
 
   onDownload = function ( ) {
@@ -99,6 +97,8 @@ kjj.itiran = (function () {
 
   // ほぼgeminiに教えてもらったコード
   onUpload = function ( ) {
+//    $.gevent.publish('verifyUpload', [{errStr:'予約機能を' + configMap.targetNendo str + 'にしますか？'}]);
+
     const fileInput = document.getElementById('kjj-itiran-fileSelect');
     const file = fileInput.files[0];
 
@@ -121,19 +121,10 @@ kjj.itiran = (function () {
       console.error('ファイルが選択されていません');
     }
   }
-/*
-  onWakuSet = function ( ) {
-    stateMap.waku = JSON.parse(jqueryMap.$waku.val());
 
-    $.gevent.publish('verifyWaku', [{errStr:'日時の枠を設定しますか？なお、不整合を防ぐため、このクラスの予約情報は一旦全て削除されます'}]);
-  }
-*/
   //---ユーティリティメソッド---
-  // 初期化時と表示年度を変えるときに呼ばれる
-  initLocal = function (sabun) {
-    configMap.targetNendo = configMap.targetNendo + sabun;
-
-    // 年度の表示を更新し
+  initLocal = function () {
+    // 年度を表示し
     jqueryMap.$nendo.html(String(configMap.targetNendo) + '年度');
 
     // ダウンロード中フラグをたてて
@@ -360,7 +351,7 @@ kjj.itiran = (function () {
     }
 
     // データ取得開始
-    initLocal(0);
+    initLocal();
 
     jqueryMap.$previousYear
       .click( onPreviousYear );
@@ -372,6 +363,10 @@ kjj.itiran = (function () {
       .click( onUpload );
 
     return true;
+  }
+
+  changeNendo  = function ( ) {
+    $.gevent.publish('changeNendo', [{nendo : stateMap.changeNendo}]);
   }
 
   removeItiran = function ( ) {
@@ -397,6 +392,7 @@ kjj.itiran = (function () {
     configModule   : configModule,
     initModule     : initModule,
     downloadFinish : downloadFinish,
+    changeNendo    : changeNendo,
     removeItiran   : removeItiran
   };
 }());

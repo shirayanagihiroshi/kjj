@@ -21,8 +21,8 @@ kjj.shell = (function () {
                        verify         : true,  // status : dialog のとき使用
                        verifydel      : true,  // status : dialog のとき使用
                        Updone         : true,  // status : dialog のとき使用
-                       nowusableverify :true,  // status : dialog のとき使用
-                       wakuverify     : true,  // status : dialog のとき使用
+                       verifyChange   : true,  // status : dialog のとき使用
+                       verifyUpload   : true,  // status : dialog のとき使用
                        wakuUpdateDone : true}  // status : dialog のとき使用
       }
       // アンカーマップとして許容される型を事前に指定するためのもの。
@@ -140,13 +140,13 @@ kjj.shell = (function () {
                                          okFunc  : kjj.calendar.deleteReserve,
                                          ngFunc  : kjj.dialogOkCancel.closeMe});
         kjj.dialogOkCancel.initModule( jqueryMap.$container );
-      } else if ( anchor_map._status.dialogKind == 'nowusableverify' ) {
+      } else if ( anchor_map._status.dialogKind == 'verifyChange' ) {
         setModal(true);
         kjj.dialogOkCancel.configModule({showStr : stateMap.errStr,
-                                         okFunc  : kjj.setting.updateNowUsable,
+                                         okFunc  : kjj.itiran.changeNendo,
                                          ngFunc  : kjj.dialogOkCancel.closeMe});
         kjj.dialogOkCancel.initModule( jqueryMap.$container );
-      } else if ( anchor_map._status.dialogKind == 'wakuverify' ) {
+      } else if ( anchor_map._status.dialogKind == 'verifyUpload' ) {
         setModal(true);
         kjj.dialogOkCancel.configModule({showStr : stateMap.errStr,
                                          okFunc  : kjj.setting.updateWaku,
@@ -462,30 +462,30 @@ kjj.shell = (function () {
       });
     });
 
-    // 日時の枠設定確認ダイアログ
-    $.gevent.subscribe( $container, 'verifyWaku', function (event, msg_map) {
+    // アップロード確認ダイアログ 
+    $.gevent.subscribe( $container, 'verifyUpload', function (event, msg_map) {
       stateMap.errStr = msg_map.errStr;
       changeAnchorPart({
         status : 'dialog',
         _status : {
-          dialogKind : 'wakuverify'
+          dialogKind : 'verifyUpload'
         }
       });
     });
 
-    // 日時の枠設定 設定しましたダイアログ
-    $.gevent.subscribe( $container, 'updateWakuResult', function (event, msg_map) {
-      stateMap.errStr = '日時の枠を設定しました。';
+    // 年度変更確認ダイアログ
+    $.gevent.subscribe( $container, 'verifyChange', function (event, msg_map) {
+      stateMap.errStr = msg_map.errStr;
       changeAnchorPart({
         status : 'dialog',
         _status : {
-          dialogKind : 'wakuUpdateDone'
+          dialogKind : 'verifyChange'
         }
       });
     });
 
     // 表示する情報の年度を変更
-    $.gevent.subscribe( $container, 'nendoChange', function (event, msg_map) {
+    $.gevent.subscribe( $container, 'changeNendo', function (event, msg_map) {
       stateMap.targetNendo = msg_map.nendo;
       changeAnchorPart({
         status : 'itiran'
