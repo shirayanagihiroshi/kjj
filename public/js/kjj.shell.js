@@ -149,7 +149,7 @@ kjj.shell = (function () {
       } else if ( anchor_map._status.dialogKind == 'verifyUpload' ) {
         setModal(true);
         kjj.dialogOkCancel.configModule({showStr : stateMap.errStr,
-                                         okFunc  : kjj.setting.updateWaku,
+                                         okFunc  : kjj.itiran.upload,
                                          ngFunc  : kjj.dialogOkCancel.closeMe});
         kjj.dialogOkCancel.initModule( jqueryMap.$container );
       } else if ( anchor_map._status.dialogKind == 'wakuUpdateDone' ) {

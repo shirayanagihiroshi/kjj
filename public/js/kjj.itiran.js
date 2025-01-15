@@ -16,11 +16,11 @@ kjj.itiran = (function () {
           + '<button class="kjj-itiran-download">ダウンロード</button>'
           + '<input type="file" id="kjj-itiran-fileSelect">'
           + '<button class="kjj-itiran-upload">アップロード</button>'
-          + '<span class="kjj-itiran-wait">データ取得中</span>'
+          + '<span class="kjj-itiran-wait">通信中</span>'
           + '<table class="kjj-itiran-table"></table>',
         gakunenList  : ['-', '中学', '高1', '高2', '高3'],
         tikuList     : ['地区A(1)', '地区B(2)', '地区C(3)'],
-        csvHeader  : '中高,1年組,1年番,2年組,2年番,3年組,3年番,氏名,PTA地区番,住所\n',
+        csvHeader  : 'DBID,中高,1年組,1年番,2年組,2年番,3年組,3年番,氏名,PTA地区番,住所\n',
         tableHeader  : '<tr><th>中高</th><th>学年</th><th>クラス</th><th>番号</th><th>氏名</th><th>PTA地区番</th><th>住所</th>',
         downloadFileName : 'kojinjyouhou_',
         settable_map : { targetNendo : true },
@@ -33,8 +33,8 @@ kjj.itiran = (function () {
       },
       jqueryMap = {},
       setJqueryMap, configModule, initModule, downloadFinish, changeNendo,
-      removeItiran, initLocal, onPreviousYear, onNextYear, onDownload,
-      onUpload, uploadInner, createTable, backToCalendar, setView;
+      upload, removeItiran, initLocal, onPreviousYear, onNextYear,
+      onDownload, onUpload, uploadInner, createTable;
 
   //---DOMメソッド---
   setJqueryMap = function () {
@@ -95,10 +95,12 @@ kjj.itiran = (function () {
     }
   }
 
-  // ほぼgeminiに教えてもらったコード
   onUpload = function ( ) {
-//    $.gevent.publish('verifyUpload', [{errStr:'予約機能を' + configMap.targetNendo str + 'にしますか？'}]);
+    $.gevent.publish('verifyUpload', [{errStr:String(configMap.targetNendo) + '年度のデータとして登録しますか？'}]);
+  }
 
+  // ほぼgeminiに教えてもらったコード
+  upload = function ( ) {
     const fileInput = document.getElementById('kjj-itiran-fileSelect');
     const file = fileInput.files[0];
 
@@ -124,9 +126,6 @@ kjj.itiran = (function () {
 
   //---ユーティリティメソッド---
   initLocal = function () {
-    // 年度を表示し
-    jqueryMap.$nendo.html(String(configMap.targetNendo) + '年度');
-
     // ダウンロード中フラグをたてて
     stateMap.downloading = true;
 
@@ -135,16 +134,20 @@ kjj.itiran = (function () {
 
     // テーブルを初期化して
     jqueryMap.$table.html('');
-
-    // データ取得開始
-    kjj.model.readySeito(configMap.targetNendo);
   }
 
   uploadInner = function (str) {
-    let i, j, obj, record, tyuukou,
-      records = str.split('\n');
+    let i, j, obj, objPerson, record, tyuukou,
+      records = str.split('\n'),
+      objs = [];
 
-    for (i = 0; i < records.length; i++) {
+    // 0行目は項目名
+    for (i = 1; i < records.length; i++) {
+      // 最後は無効な行かもしれない
+      if (records[i].length == 0) {
+        continue;
+      }
+
       record = records[i].split(',');
 
       if (record[0] == '中') {
@@ -152,13 +155,13 @@ kjj.itiran = (function () {
       } else {
         tyuukou = 1;
       }
+      objPerson = { shimei  : record[8],
+                    tikuban : record[9],
+                    address : record[10] };
 
-      obj = { tyuukou : tyuukou,
-              shimei  : record[7],
-              tikuban : record[8],
-              address : record[9] };
-
+      //この辺未実装
       // 1年次のクラス、2年次クラス、3年次クラスを追加
+    /*
       for (j = 0; j < record.length; j++) {
         if (record[0] == '中' || record[0] == '中学') {
           tyuukou = 0;
@@ -170,8 +173,17 @@ kjj.itiran = (function () {
 	obj = {}
         record[j];
       }
-      console.log(records[i]);
+      */
+      obj = {updateOne:{filter: { _id  : record[0] },
+                        update: { $set : objPerson },
+                        upsert: true                }};
+      console.log(obj);
+      objs.push(obj);
     }
+    // アップロード処理
+    kjj.model.upload(objs);
+    $.gevent.publish('cancelDialog', [{}]);
+    initLocal();
   }
 
   // kind 処理種別
@@ -201,6 +213,11 @@ kjj.itiran = (function () {
       };
 
     for (i = 0; i < seito.length; i++) {
+
+      // uploadのときにIDが必要
+      if (kind == 'csv') {
+        str += seito[i]._id + ',';
+      }
 
       // 中高 中学:0, 高校:1
       if (kind == 'csv') {
@@ -282,41 +299,6 @@ kjj.itiran = (function () {
     return str;
   }
 
-  setView = function () {
-    /*
-    let i, j,
-      propDate = [],
-      str      = "",
-      myclsWaku = yoyaku.model.getWaku(),
-
-    let str, waku = kjj.model.getWaku();
-
-    // 日時枠が未設定なら
-    if (waku.length == 0) {
-      jqueryMap.$usableButton.css('display', 'none');
-
-      jqueryMap.$usable1.css('display', 'none');
-      jqueryMap.$usable2.css('display', 'none');
-    } else {
-
-    // 日時枠が設定済なら
-      jqueryMap.$usableButton.css('display', 'block');
-
-      if (waku[0].nowusable == true) {
-        jqueryMap.$usable2.css('display', 'none');
-        jqueryMap.$usable3.css('display', 'none');
-        str = '無効にする';
-      } else {
-        jqueryMap.$usable1.css('display', 'none');
-        jqueryMap.$usable3.css('display', 'none');
-        str = '有効にする';
-      }
-
-      jqueryMap.$usableButton.html(str);
-    }
-    */
-  }
-
   //---パブリックメソッド---
   configModule = function ( input_map ) {
     kjj.util.setConfigMap({
@@ -350,8 +332,10 @@ kjj.itiran = (function () {
       jqueryMap.$tikuSelect.append(obj);
     }
 
-    // データ取得開始
     initLocal();
+
+    // データ取得開始
+    kjj.model.readySeito(configMap.targetNendo);
 
     jqueryMap.$previousYear
       .click( onPreviousYear );
@@ -393,6 +377,7 @@ kjj.itiran = (function () {
     initModule     : initModule,
     downloadFinish : downloadFinish,
     changeNendo    : changeNendo,
+    upload         : upload,
     removeItiran   : removeItiran
   };
 }());

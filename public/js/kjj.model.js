@@ -7,7 +7,7 @@ kjj.model = (function () {
   'use strict';
 
   var initModule, login, logout, islogind, getAKey,
-      initLocal, iskyouin, readySeito, getSeito,//関数
+      initLocal, iskyouin, readySeito, getSeito, upload,//関数
       accessKey, userKind, name, seito; //モジュールスコープ変数
 
   initLocal = function () {
@@ -48,8 +48,10 @@ kjj.model = (function () {
     });
 
     // 登録成功
-    kjj.data.registerReceive('updateReserveSuccess', function (msg) {
-      $.gevent.publish('updateReserveSuccess', [{}]);
+    kjj.data.registerReceive('uploadResult', function (msg) {
+
+      // 本来イベントを分けるべきだろうが、めんどくさいのでデータ取得時と同じ処理とする。
+      $.gevent.publish('getSeitoResult', [{}]);
     });
 
     // 登録失敗
@@ -134,6 +136,12 @@ kjj.model = (function () {
     return seito;
   }
 
+  upload = function (objs) {
+    let queryObj = {AKey : accessKey,
+                    upData : objs};
+    kjj.data.sendToServer('upload',queryObj);
+  }
+
   return { initModule      : initModule,
           login            : login,
           logout           : logout,
@@ -141,6 +149,7 @@ kjj.model = (function () {
           getAKey          : getAKey,
           iskyouin         : iskyouin,
           readySeito       : readySeito,
-          getSeito         : getSeito
+          getSeito         : getSeito,
+          upload           : upload
         };
 }());
