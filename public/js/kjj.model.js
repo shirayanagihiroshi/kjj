@@ -49,9 +49,8 @@ kjj.model = (function () {
 
     // 登録成功
     kjj.data.registerReceive('uploadResult', function (msg) {
-
-      // 本来イベントを分けるべきだろうが、めんどくさいのでデータ取得時と同じ処理とする。
-      $.gevent.publish('getSeitoResult', [{}]);
+      // 余り行儀が良くない処理な気がする
+      kjj.itiran.uploadFinish();
     });
 
     // 登録失敗

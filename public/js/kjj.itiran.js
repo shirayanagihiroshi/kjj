@@ -20,7 +20,8 @@ kjj.itiran = (function () {
           + '<table class="kjj-itiran-table"></table>',
         gakunenList  : ['-', '中学', '高1', '高2', '高3'],
         tikuList     : ['地区A(1)', '地区B(2)', '地区C(3)'],
-        csvHeader  : 'DBID,中高,1年組,1年番,2年組,2年番,3年組,3年番,氏名,PTA地区番,住所\n',
+        csvHeader    : 'DBID,中高,1年組,1年番,2年組,2年番,3年組,3年番,氏名,PTA地区番,住所',
+        kaigyou      : '\r\n',
         tableHeader  : '<tr><th>中高</th><th>学年</th><th>クラス</th><th>番号</th><th>氏名</th><th>PTA地区番</th><th>住所</th>',
         downloadFileName : 'kojinjyouhou_',
         settable_map : { targetNendo : true },
@@ -33,8 +34,8 @@ kjj.itiran = (function () {
       },
       jqueryMap = {},
       setJqueryMap, configModule, initModule, downloadFinish, changeNendo,
-      upload, removeItiran, initLocal, onPreviousYear, onNextYear,
-      onDownload, onUpload, uploadInner, createTable;
+      upload, uploadFinish, removeItiran, initLocal, onPreviousYear,
+      onNextYear, onDownload, onUpload, uploadInner, createTable;
 
   //---DOMメソッド---
   setJqueryMap = function () {
@@ -65,6 +66,11 @@ kjj.itiran = (function () {
     stateMap.downloading = false;
   }
 
+  uploadFinish = function ( ) {
+    // データ取得開始
+    kjj.model.readySeito(configMap.targetNendo);
+  }
+
   // 表示年度を変えるときは初回表示時と同じようにする
   onPreviousYear = function ( ) {
     stateMap.changeNendo = configMap.targetNendo - 1;
@@ -80,7 +86,7 @@ kjj.itiran = (function () {
     if (stateMap.downloading == false) {
       const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
       const content = createTable('csv');
-      const blob = new Blob([ bom, configMap.csvHeader + content ], { "type" : "text/csv" });
+      const blob = new Blob([ bom, configMap.csvHeader + configMap.kaigyou + content ], { "type" : "text/csv" });
 
       // https://javascript.keicode.com/newjs/download-files.php#2-1
       // 上記参照
@@ -137,8 +143,8 @@ kjj.itiran = (function () {
   }
 
   uploadInner = function (str) {
-    let i, j, obj, objPerson, record, tyuukou,
-      records = str.split('\n'),
+    let i, obj, objPerson, record, tyuukou, clsinfo,
+      records = str.split( configMap.kaigyou ),
       objs = [];
 
     // 0行目は項目名
@@ -150,7 +156,7 @@ kjj.itiran = (function () {
 
       record = records[i].split(',');
 
-      if (record[0] == '中') {
+      if (record[0] == '中' || record[0] == '中学' || record[0] == '中学校') {
         tyuukou = 0;
       } else {
         tyuukou = 1;
@@ -159,21 +165,42 @@ kjj.itiran = (function () {
                     tikuban : record[9],
                     address : record[10] };
 
-      //この辺未実装
       // 1年次のクラス、2年次クラス、3年次クラスを追加
-    /*
-      for (j = 0; j < record.length; j++) {
-        if (record[0] == '中' || record[0] == '中学') {
-          tyuukou = 0;
-        } else {
-          tyuukou = 1;
-        }
-	record[0]
-	tyuukou
-	obj = {}
-        record[j];
+      clsinfo = [];
+      // 2年と3年が空欄なら1年生
+      if (record[4].length == 0 && record[5].length == 0 &&
+          record[6].length == 0 && record[7].length == 0) {
+        clsinfo.push({nendo   : configMap.targetNendo,
+                      gakunen : 1                    ,
+                      cls     : Number(record[2])    ,
+                      bangou  : Number(record[3])     });
+      // そうでなく、3年が空欄なら2年生
+      } else if (record[6].length == 0 && record[7].length == 0) {
+        clsinfo.push({nendo   : configMap.targetNendo - 1,
+                      gakunen : 1                        ,
+                      cls     : Number(record[2])        ,
+                      bangou  : Number(record[3])         });
+        clsinfo.push({nendo   : configMap.targetNendo    ,
+                      gakunen : 2                        ,
+                      cls     : Number(record[4])        ,
+                      bangou  : Number(record[5])         });
+      // そうでなければ3年生
+      } else {
+        clsinfo.push({nendo   : configMap.targetNendo - 2,
+                      gakunen : 1                        ,
+                      cls     : Number(record[2])        ,
+                      bangou  : Number(record[3])         });
+        clsinfo.push({nendo   : configMap.targetNendo - 1,
+                      gakunen : 2                        ,
+                      cls     : Number(record[4])        ,
+                      bangou  : Number(record[5])         });
+        clsinfo.push({nendo   : configMap.targetNendo    ,
+                      gakunen : 3                        ,
+                      cls     : Number(record[6])        ,
+                      bangou  : Number(record[7])         });
       }
-      */
+      objPerson.clsinfo = clsinfo;
+
       obj = {updateOne:{filter: { _id  : record[0] },
                         update: { $set : objPerson },
                         upsert: true                }};
@@ -291,7 +318,7 @@ kjj.itiran = (function () {
       str += seito[i].address;
 
       if (kind == 'csv') {
-        str += '\n';
+        str += configMap.kaigyou;
       } else if (kind == 'html') {
         str += '</td></tr>';
       }
@@ -378,6 +405,7 @@ kjj.itiran = (function () {
     downloadFinish : downloadFinish,
     changeNendo    : changeNendo,
     upload         : upload,
+    uploadFinish   : uploadFinish,
     removeItiran   : removeItiran
   };
 }());
